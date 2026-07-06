@@ -102,6 +102,7 @@ pipeline {
             --name ${APP_NAME} \\
             --network royawl-bridge \\
             -p 8761:8761 \\
+            -v /home/ubuntu/documents/royawl:/app/data/royawl \\
             -v /home/ubuntu/config/royawl-eureka-server/log4j2.xml:/config/log4j2.xml \\
             -e LOG4J2_CONFIG=/config/log4j2.xml \\
             -e SPRING_PROFILES_ACTIVE=prod \\
@@ -120,7 +121,7 @@ EOF
 
           steps {
             script {
-              def HEALTH_URL = "https://api.royawl.com/api/system/healthCheck"
+              def HEALTH_URL = "https://api.royawl.com/system/healthCheck"
               retry(10) {
                 sleep 15
                 def response = sh(script: "curl -s -k ${HEALTH_URL} || echo 'failed'", returnStdout: true).trim()
