@@ -121,7 +121,7 @@ EOF
 
           steps {
             script {
-              def HEALTH_URL = "https://api.royawl.com:8761/eureka/"
+              def HEALTH_URL = "https://api.royawl.com/api/system/healthCheck"
               retry(10) {
                 sleep 15
                 def response = sh(script: "curl -s -k ${HEALTH_URL} || echo 'failed'", returnStdout: true).trim()
