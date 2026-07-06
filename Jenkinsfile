@@ -89,31 +89,30 @@ pipeline {
             withCredentials([
               usernamePassword(credentialsId: 'vps-root', usernameVariable: 'USER', passwordVariable: 'PASS')
             ]) {
-              sh """
-                        sshpass -p '$PASS' ssh -T -o StrictHostKeyChecking=no root@${REMOTE_IP} << 'EOF'
-                                # Load the new image
-                                docker load -i ${DEPLOY_PATH}/${IMAGE_TAR}
-                                
-                                # Stop and remove existing container if it exists
-                                docker rm -f ${APP_NAME} || true
-                                
-                                # Run the new container
-                                docker run -d \
-                                    --name ${APP_NAME} \
-                                    --network royawl-bridge \
-                                    --add-host=host.docker.internal:host-gateway \
-                                    -p 8761:8761 \
-                                    -v /home/ubuntu/config/royawl-eureka-server/log4j2.xml:/config/log4j2.xml \
-                                    -e LOG4J2_CONFIG=/config/log4j2.xml \
-                                    -e SPRING_PROFILES_ACTIVE=prod \
-                                    -e SPRING_OUTPUT_ANSI_ENABLED=NEVER \
-                                    -e SERVER_PORT=8761 \                                   
-                                    ${IMAGE_NAME}
-                                    
-                                # Cleanup the tar file to save space
-                                rm ${DEPLOY_PATH}/${IMAGE_TAR}
+            sh """
+    sshpass -p '$PASS' ssh -T -o StrictHostKeyChecking=no root@${REMOTE_IP} << 'EOF'
+        # Load the new image
+        docker load -i ${DEPLOY_PATH}/${IMAGE_TAR}
+        
+        # Stop and remove existing container if it exists
+        docker rm -f ${APP_NAME} || true
+        
+        # Run the new container
+        docker run -d \\
+            --name ${APP_NAME} \\
+            --network royawl-bridge \\
+            -p 8761:8761 \\
+            -v /home/ubuntu/config/royawl-eureka-server/log4j2.xml:/config/log4j2.xml \\
+            -e LOG4J2_CONFIG=/config/log4j2.xml \\
+            -e SPRING_PROFILES_ACTIVE=prod \\
+            -e SPRING_OUTPUT_ANSI_ENABLED=NEVER \\
+            -e SERVER_PORT=8761 \\
+            ${IMAGE_NAME}
+            
+        # Cleanup the tar file to save space
+        rm ${DEPLOY_PATH}/${IMAGE_TAR}
 EOF
-                    """
+"""
             }
           }
         }
