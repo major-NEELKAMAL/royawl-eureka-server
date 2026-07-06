@@ -102,7 +102,7 @@ pipeline {
                                     --name ${APP_NAME} \
                                     --network royawl-bridge \
                                     --add-host=host.docker.internal:host-gateway \
-                                    -p 8761:8761 \                                    
+                                    -p 8761:8761 \
                                     -v /home/ubuntu/config/royawl-eureka-server/log4j2.xml:/config/log4j2.xml \
                                     -e LOG4J2_CONFIG=/config/log4j2.xml \
                                     -e SPRING_PROFILES_ACTIVE=prod \
