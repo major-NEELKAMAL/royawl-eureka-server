@@ -7,11 +7,11 @@ import org.springframework.context.annotation.PropertySource;
 
 @EnableEurekaServer
 @SpringBootApplication
-@PropertySource({"classpath:application-${spring.profiles.active}.properties"})
+@PropertySource({ "classpath:application-${spring.profiles.active}.properties" })
 public class RoyawlEurekaServerApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(RoyawlEurekaServerApplication.class, args);
-  }
+	public static void main(String[] args) {
+		SpringApplication.run(RoyawlEurekaServerApplication.class, args);
+	}
 
 }

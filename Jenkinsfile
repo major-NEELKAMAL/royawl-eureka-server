@@ -9,6 +9,8 @@ pipeline {
     MAVEN_REPO = "/var/lib/jenkins/.m2/repository"
     DEPLOY_PATH = "/home/ubuntu/jar/jenkins/deploy"
     REMOTE_IP = "168.231.102.240"
+    SSH_CRED_ID = "vps-ssh-key"   
+    SSH_USER = "root"
     APP_NAME = "royawl-eureka-server"
     IMAGE_NAME = "royawl-eureka-server:latest"
     IMAGE_TAR = "royawl-eureka-server.tar"
@@ -43,20 +45,17 @@ pipeline {
           steps {
             script {
 
-              sh "docker build -t ${IMAGE_NAME} ."
+              sh "docker buildx build --platform linux/amd64 -t ${IMAGE_NAME} ."
 
               sh "docker save ${IMAGE_NAME} -o ${IMAGE_TAR}"
             }
           }
         }
 
-        stage('Upload Docker Image') {
+         stage('Upload Docker Image') {
           steps {
-            withCredentials([
-              usernamePassword(credentialsId: 'vps-root', usernameVariable: 'USER', passwordVariable: 'PASS')
-            ]) {
-
-              sh "sshpass -p '$PASS' scp -o StrictHostKeyChecking=no ${IMAGE_TAR} ${USER}@${REMOTE_IP}:${DEPLOY_PATH}/${IMAGE_TAR}"
+             sshagent(credentials: ["${env.SSH_CRED_ID}"]) {
+              sh "scp -o StrictHostKeyChecking=no ${IMAGE_TAR} ${env.SSH_USER}@${REMOTE_IP}:${DEPLOY_PATH}/${IMAGE_TAR}"
             }
           }
         }
@@ -84,13 +83,10 @@ pipeline {
         }        
 
         stage('Execute Deployment') {
-
           steps {
-            withCredentials([
-              usernamePassword(credentialsId: 'vps-root', usernameVariable: 'USER', passwordVariable: 'PASS')
-            ]) {
+            sshagent(credentials: ["${env.SSH_CRED_ID}"]) {
             sh """
-    sshpass -p '$PASS' ssh -T -o StrictHostKeyChecking=no root@${REMOTE_IP} << 'EOF'
+    ssh -T -o StrictHostKeyChecking=no ${SSH_USER}@${REMOTE_IP} << EOF
         # Load the new image
         docker load -i ${DEPLOY_PATH}/${IMAGE_TAR}
         
@@ -121,7 +117,7 @@ EOF
 
           steps {
             script {
-              def HEALTH_URL = "https://api.royawl.com/system/healthCheck"
+              def HEALTH_URL = "https://api.royawl.com/api/system/healthcheck/eureka-server"
               retry(10) {
                 sleep 15
                 def response = sh(script: "curl -s -k ${HEALTH_URL} || echo 'failed'", returnStdout: true).trim()
