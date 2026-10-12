@@ -99,6 +99,7 @@ pipeline {
         # Run the new container
         docker run -d \\
             --name ${APP_NAME} \\
+            --memory 768m --memory-swap 768m --restart unless-stopped \\
             --network royawl-bridge \\
             -p 8761:8761 \\
             -v /home/ubuntu/documents/royawl:/app/data/royawl \\
