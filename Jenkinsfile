@@ -85,6 +85,9 @@ pipeline {
         stage('Execute Deployment') {
           steps {
             sshagent(credentials: ["${env.SSH_CRED_ID}"]) {
+            withCredentials([
+              usernamePassword(credentialsId: 'eureka-credentials', usernameVariable: 'EUREKA_USERNAME', passwordVariable: 'EUREKA_PASSWORD')
+            ]) {
             sh """
     ssh -T -o StrictHostKeyChecking=no ${SSH_USER}@${REMOTE_IP} << EOF
         # Load the new image
@@ -104,12 +107,15 @@ pipeline {
             -e SPRING_PROFILES_ACTIVE=prod \\
             -e SPRING_OUTPUT_ANSI_ENABLED=NEVER \\
             -e SERVER_PORT=8761 \\
+            -e EUREKA_USERNAME="${EUREKA_USERNAME}" \\
+            -e EUREKA_PASSWORD="${EUREKA_PASSWORD}" \\
             ${IMAGE_NAME}
             
         # Cleanup the tar file to save space
         rm ${DEPLOY_PATH}/${IMAGE_TAR}
 EOF
 """
+            }
             }
           }
         }
