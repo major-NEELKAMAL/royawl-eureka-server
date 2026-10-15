@@ -8,9 +8,9 @@ pipeline {
   environment {
     MAVEN_REPO = "/var/lib/jenkins/.m2/repository"
     DEPLOY_PATH = "/home/ubuntu/jar/jenkins/deploy"
-    REMOTE_IP = "168.231.102.240"
-    SSH_CRED_ID = "vps-ssh-key"   
-    SSH_USER = "root"
+    REMOTE_IP = credentials('test-server-ip')
+    SSH_CRED_ID = "test-server-ssh-key"   
+    SSH_USER = "ubuntu"
     APP_NAME = "royawl-eureka-server"
     IMAGE_NAME = "royawl-eureka-server:latest"
     IMAGE_TAR = "royawl-eureka-server.tar"
@@ -45,7 +45,7 @@ pipeline {
           steps {
             script {
 
-              sh "docker buildx build --platform linux/amd64 -t ${IMAGE_NAME} ."
+              sh "docker buildx build --platform linux/arm64 --load -t ${IMAGE_NAME} ."
 
               sh "docker save ${IMAGE_NAME} -o ${IMAGE_TAR}"
             }
@@ -101,7 +101,7 @@ pipeline {
             --name ${APP_NAME} \\
             --memory 768m --memory-swap 768m --restart unless-stopped \\
             --network royawl-bridge \\
-            -p 8761:8761 \\
+            -p 127.0.0.1:8761:8761 \\
             -v /home/ubuntu/documents/royawl:/app/data/royawl \\
             -v /home/ubuntu/config/royawl-eureka-server/log4j2.xml:/config/log4j2.xml \\
             -e LOG4J2_CONFIG=/config/log4j2.xml \\
@@ -127,7 +127,7 @@ EOF
               def HEALTH_URL = "https://api.royawl.com/api/system/healthcheck/eureka-server"
               retry(10) {
                 sleep 15
-                def response = sh(script: "curl -s -k ${HEALTH_URL} || echo 'failed'", returnStdout: true).trim()
+                def response = sh(script: "curl -s -k --max-time 10 --resolve api.royawl.com:443:\${REMOTE_IP} ${HEALTH_URL} || echo 'failed'", returnStdout: true).trim()
                 if (!response.contains('"success" : true')) {
                   error "App not healthy yet. Check logs on server."
                 }
